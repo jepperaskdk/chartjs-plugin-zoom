@@ -122,7 +122,8 @@ function zoomCategoryScale(scale, zoom, center, zoomOptions) {
 	var centerPointer = scale.isHorizontal() ? center.x : center.y;
 	var range = maxIndex - minIndex;
 	var absoluteZoom = Math.abs(1 - zoom);
-
+	// console.log(scale, chartCenter, centerPointer);
+	var rel = Math.min(1, centerPointer / scale.width);
 	zoomNS.zoomCumulativeDelta = zoom > 1 ? zoomNS.zoomCumulativeDelta + 1 : zoomNS.zoomCumulativeDelta - 1;
 
 	if (Math.abs(zoomNS.zoomCumulativeDelta) > sensitivity) {
@@ -133,7 +134,8 @@ function zoomCategoryScale(scale, zoom, center, zoomOptions) {
 					// We've already zoomed all the way out to the right
 					maxIndex = Math.min(lastLabelIndex, Math.floor(maxIndex + range * absoluteZoom));
 				} else {
-					minIndex = Math.max(0, Math.floor(minIndex - range * absoluteZoom));
+					minIndex = Math.max(0, Math.floor(minIndex - (range * absoluteZoom) / 2));
+					maxIndex = Math.min(lastLabelIndex, Math.floor(maxIndex + (range * absoluteZoom) / 2));
 				}
 			} else if (centerPointer < chartCenter) {
 				if (maxIndex >= lastLabelIndex) {
@@ -146,11 +148,8 @@ function zoomCategoryScale(scale, zoom, center, zoomOptions) {
 			zoomNS.zoomCumulativeDelta = 0;
 		} else if (zoomNS.zoomCumulativeDelta > 0) {
 			// Zoom in
-			if (centerPointer >= chartCenter) {
-				minIndex = minIndex < maxIndex ? Math.min(maxIndex, Math.floor(minIndex + range * absoluteZoom)) : minIndex;
-			} else if (centerPointer < chartCenter) {
-				maxIndex = maxIndex > minIndex ? Math.max(minIndex, Math.floor(maxIndex - range * absoluteZoom)) : maxIndex;
-			}
+			minIndex = minIndex + Math.floor(rel * (absoluteZoom / 2) * range);
+			maxIndex = maxIndex - Math.floor((1 - rel) * (absoluteZoom / 2) * range);
 			zoomNS.zoomCumulativeDelta = 0;
 		}
 		scale.options.ticks.min = rangeMinLimiter(zoomOptions, labels[minIndex]);
